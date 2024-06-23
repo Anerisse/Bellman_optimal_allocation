@@ -80,134 +80,150 @@ function getData() {
     }
   }
 
-  console.log("Полученный массив: ");
+  console.log("Введённые данные: ");
 
   console.log(dataArr);
 
   return dataArr;
 }
 
-let allArr = [];
-let resMas = [];
-let myArr = [];
-let prCount = 0;
-let varCount = 0;
-let answArr = [];
+//let allArr = [];
+//let resArr = [];
+//let myArr = [];
+//let prCount = 0;
+//let varCount = 0;
+//let answArr = [];
 
 function start() {
-  myArr = getData();
-
-  prCount = myArr.length - 1;
-  varCount = myArr[0].length;
+  let myArr = getData();
+  let prCount = myArr.length - 1;
+  let varCount = myArr[0].length;
 
   console.log("prCount = " + prCount + "\nvarCount = " + varCount);
 
+  //Добавляем нули первыми элементами
   for (let i = 0; i < myArr.length; i++) {
     myArr[i].unshift(0);
   }
   console.log("myArr");
-  for (let i = 0; i < myArr.length; i++) {
-    for (let j = 0; j < myArr[i].length; j++) {}
-    console.log(myArr[i]);
-  }
+  console.log(myArr);
 
-  console.log("resMas:");
-  for (let i = 0; i < varCount + 1; i++) {
-    f1(i, 0);
-    //console.log(i + ": " + resMas[i]);
-  }
-  console.log(resMas);
+  //Получаем массив ресурсов(самый левый столбец)
+  console.log("resArr:");
+  let resArr = getResArr(myArr);
+  console.log(resArr);
 
-  for (let K = prCount - 1; K > 0; K--) {
-    console.log("");
-    console.log("%cK = " + K, "color:red");
-    let t1Mas = [];
-    ///[... [ [0, 2, 3], [1, 1, 1] ], ...]
-    /// []
-    console.log("t1Mas:");
-
-    for (let i = 0; i < varCount + 1; i++) {
-      // [ [] ]
-      t1Mas.push([]);
-      // [ [f2(i,3)] ];
-      t1Mas[i] = f2(i, K);
-    }
-
-    allArr.push(t1Mas);
-  }
-
-  console.log("");
+  //Получаем общий массив
+  let allArr = getAllArr(myArr);
 
   console.log("allArr");
-
   console.log(allArr);
 
-  answArr = [];
+  //создаём и выводим таблицу расчёта
+  createCalculateTable(resArr, allArr, prCount, varCount);
+
+  //создаём массив для ответа и заполняем его "!"
+  let answArr = [];
   for (let i = 0; i < prCount; i++) {
     answArr.push("!");
   }
 
-  printResults();
+  //Считаем массив результатов
+  //Копируем в copyArr allArr чтобы можно было посмотреть allArr в консоли
+  let copyArr = JSON.parse(JSON.stringify(allArr));
+  answer(copyArr, answArr, myArr);
+
+  //Выводим результат
+  printAnswer(answArr);
 }
 
-function f1(i, stolb) {
-  tmpMas = [];
+function getResArr(myArr) {
+  let tmpArr = [];
+  let varCount = myArr[0].length;
 
-  for (let k = 0; k <= i; k++) {
-    tmpMas.push(myArr[stolb][k]);
+  for (let i = 0; i < varCount + 1; i++) {
+    tmpArr[i] = [];
+    for (let k = 0; k <= i; k++) {
+      tmpArr[i].push(myArr[0][k]);
+    }
+    // console.log(tmpArr);
+    //console.log(i + ": " + resArr[i]);
   }
-
-  // console.log(tmpMas);
-  resMas.push(tmpMas);
-  return;
+  return tmpArr;
 }
 
-function f2(i, stolb) {
-  tmpMas = [];
+function getAllArr(myArr) {
+  let prCount = myArr.length - 1;
+  let varCount = myArr[0].length;
+  let allArr = [];
+  for (let K = prCount - 1; K > 0; K--) {
+    console.log("");
+    console.log("%cK = " + K, "color:red");
+    let partArr = [];
+    ///[... [ [0, 2, 3], [1, 1, 1] ], ...]
+    /// []
+    console.log("partArr(включает в себя все tmpArr):");
+
+    for (let i = 0; i < varCount; i++) {
+      // [ [] ]
+      partArr.push([]);
+      // [ [fillElementAllArr(i,3)] ];
+      partArr[i] = fillElemAllArr(myArr, allArr, i, K);
+    }
+
+    allArr.push(partArr);
+  }
+  return allArr;
+}
+
+function fillElemAllArr(myArr, allArr, i, stolb) {
+  let prCount = myArr.length - 1;
+  //let varCount = myArr[0].length;
+  let tmpArr = [];
 
   for (let k = 0; k <= i; k++) {
-    tmpMas.push([]);
-    tmpMas[k].push(myArr[stolb][k]);
+    tmpArr.push([]);
+    tmpArr[k].push(myArr[stolb][k]);
 
     if (stolb === prCount - 1) {
-      tmpMas[k].push(myArr[[prCount]][i - k]);
+      tmpArr[k].push(myArr[[prCount]][i - k]);
     } else {
-      tmpMas[k].push(
+      tmpArr[k].push(
         allArr[allArr.length - 1][i - k][
           allArr[allArr.length - 1][i - k].length - 1
         ]
       );
     }
     let sum = 0;
-    for (let i = 0; i < tmpMas[k].length; i++) {
-      sum += tmpMas[k][i];
+    for (let i = 0; i < tmpArr[k].length; i++) {
+      sum += tmpArr[k][i];
     }
-    tmpMas[k].push(sum);
+    tmpArr[k].push(sum);
   }
   let max = 0;
-  for (let i = 0; i < tmpMas.length; i++) {
-    if (tmpMas[i][tmpMas[i].length - 1] > max) {
-      max = tmpMas[i][tmpMas[i].length - 1];
+  for (let i = 0; i < tmpArr.length; i++) {
+    if (tmpArr[i][tmpArr[i].length - 1] > max) {
+      max = tmpArr[i][tmpArr[i].length - 1];
     }
   }
-  tmpMas.push(max);
+  tmpArr.push(max);
 
-  for (let i = 0; i < tmpMas.length - 1; i++) {
-    if (tmpMas[i][tmpMas[i].length - 1] === max) {
-      tmpMas[i].push(max);
+  for (let i = 0; i < tmpArr.length - 1; i++) {
+    if (tmpArr[i][tmpArr[i].length - 1] === max) {
+      tmpArr[i].push(max);
     } else {
-      tmpMas[i].push(0);
+      tmpArr[i].push(0);
     }
   }
 
-  console.log("tmpMas " + i);
+  console.log("tmpArr " + i);
 
-  console.log(tmpMas);
+  console.log(tmpArr);
 
-  return tmpMas;
+  return tmpArr;
 }
 
-function printResults() {
+function createCalculateTable(resArr, allArr, prCount, varCount) {
   let divResult = document.getElementById("results");
   divResult.innerHTML = "";
   let kTable = document.createElement("table");
@@ -240,7 +256,7 @@ function printResults() {
   let tbody = document.createElement("tbody");
   for (let i = 0; i < varCount + 1; i++) {
     let tempTd;
-    for (let j = 0; j < resMas[i].length; j++) {
+    for (let j = 0; j < resArr[i].length; j++) {
       let tempTr = document.createElement("tr");
 
       for (let k = 0; k < prCount + 1; k++) {
@@ -249,7 +265,7 @@ function printResults() {
             // только для первой строки группы
             tempTd = document.createElement("td");
             tempTd.textContent = i;
-            tempTd.rowSpan = resMas[i].length;
+            tempTd.rowSpan = resArr[i].length;
 
             tempTd.style = "border-left:  solid 2px #000";
             tempTr.appendChild(tempTd);
@@ -257,13 +273,21 @@ function printResults() {
           // ничего не делать для остальных строк
         } else if (k === 1) {
           let tempTd = document.createElement("td");
-          tempTd.textContent = resMas[i][j].toFixed(2);
+          tempTd.textContent = resArr[i][j];
+          if (Number.isInteger(resArr[i][j])) {
+          } else {
+            tempTd.textContent = resArr[i][j].toFixed(2);
+          }
           tempTd.style = "border-right:  solid 2px #000";
           tempTr.appendChild(tempTd);
         } else {
           for (let l = 0; l < 4; l++) {
             let tempTd = document.createElement("td");
-            tempTd.textContent = allArr[k - 2][i][j][l].toFixed(2);
+            if (Number.isInteger(allArr[k - 2][i][j][l])) {
+              tempTd.textContent = allArr[k - 2][i][j][l];
+            } else {
+              tempTd.textContent = allArr[k - 2][i][j][l].toFixed(2);
+            }
             if (l === 3) {
               tempTd.style = "border-right:  solid 2px #000";
             }
@@ -271,7 +295,7 @@ function printResults() {
           }
         }
       }
-      if (j === resMas[i].length - 1) {
+      if (j === resArr[i].length - 1) {
         tempTr.style = "border-bottom:  solid 2px #000";
       }
 
@@ -282,76 +306,82 @@ function printResults() {
   kTable.appendChild(tbody);
 
   divResult.appendChild(kTable);
-  console.log("allArr");
-
-  console.log(allArr);
-
-  //Изменить так, чтоб allArr остался в первоначальном виде
-  let testArr = [];
-  testArr = allArr;
-  answer(testArr);
 }
 
-function answer(testArr) {
-  console.log("testArr:");
-  console.log(testArr);
+function answer(copyArr, answArr, myArr) {
+  console.log("copyArr:");
+  console.log(copyArr);
+  //Ищем максимальный элемент с конца (max)
+  // и в каком он K - первая размерность (maxInd)
   let max = 0;
   let maxInd = 0;
-  for (let i = 0; i < testArr.length; i++) {
-    for (let j = testArr[0].length - 1; j >= 0; j--) {
-      if (testArr[i][j][testArr[i][j].length - 1] >= max) {
-        max = testArr[i][j][testArr[i][j].length - 1];
+  for (let i = 0; i < copyArr.length; i++) {
+    for (let j = copyArr[0].length - 1; j >= 0; j--) {
+      if (copyArr[i][j][copyArr[i][j].length - 1] >= max) {
+        max = copyArr[i][j][copyArr[i][j].length - 1];
         maxInd = i;
       }
     }
   }
   console.log("max = " + max + "\nmaxInd = " + maxInd);
 
-  dArr = testArr[maxInd][testArr[maxInd].length - 1];
-  testF(dArr, maxInd);
-  testArr.splice(maxInd, 1);
-  for (let i = 0; i < testArr.length; i++) {
-    testArr[i].pop();
-  }
-  console.log("testArr");
+  //Вписываем в нужное место answArr
+  let cutArr = copyArr[maxInd][copyArr[maxInd].length - 1];
+  writeToAnswArr(cutArr, maxInd, myArr, answArr);
 
-  console.log(testArr);
-  if (testArr.length > 0) {
-    answer(testArr);
+  //Убираем из copyArr проанализированное K
+  copyArr.splice(maxInd, 1);
+  for (let i = 0; i < copyArr.length; i++) {
+    copyArr[i].pop();
+  }
+
+  console.log("Урезанный copyArr");
+
+  console.log(copyArr);
+  //Рекурсия пока у нас есть элементы в copyArr
+  if (copyArr.length > 0) {
+    answer(copyArr, answArr, myArr);
   } else {
     let sum = 0;
-
+    console.log("\nВыход из рекурсии");
+    console.log("answArr");
     console.log(answArr);
+
+    //Считаем сумму элементов в answArr
     for (let i = 0; i < answArr.length; i++) {
       if (!(typeof answArr[i] === "string")) {
         sum += answArr[i];
       }
     }
 
+    //Изменяем последний оставшийся элемент "!" на (Общее количество средств - сумма элементов в answArr)
     for (let i = 0; i < answArr.length; i++) {
       if (typeof answArr[i] === "string") {
         answArr[i] = myArr[0][myArr[0].length - 1] - sum;
       }
     }
+    console.log("Итоговый answArr");
     console.log(answArr);
-    printAnswer(answArr);
   }
 }
 
-function testF(dArr, maxInd) {
-  console.log("dArr");
+function writeToAnswArr(cutArr, maxInd, myArr, answArr) {
+  console.log("\ncutArr");
 
-  console.log(dArr);
+  console.log(cutArr);
+  //Ищем в каком элементе(строке) находится максимальное число
   let stroka = 0;
-  for (let i = 0; i < dArr.length - 1; i++) {
-    //console.log(dArr[i][dArr[i].length - 1]);
+  for (let i = 0; i < cutArr.length - 1; i++) {
+    //console.log(cutArr[i][cutArr[i].length - 1]);
 
-    if (dArr[i][dArr[i].length - 1] !== 0) {
+    if (cutArr[i][cutArr[i].length - 1] !== 0) {
       stroka = i;
       break;
     }
   }
-  console.log(stroka);
+  console.log("stroka = " + stroka);
+
+  let prCount = myArr.length - 1;
 
   console.log(
     "Вкладываем в " + (prCount - maxInd - 1) + " проект " + myArr[0][stroka]
@@ -391,7 +421,4 @@ function printAnswer(answArr) {
   tbody.appendChild(tr);
   answTable.appendChild(tbody);
   divAnsw.appendChild(answTable);
-  console.log("allArr");
-
-  console.log(allArr);
 }
