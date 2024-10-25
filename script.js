@@ -96,7 +96,14 @@ function getData() {
 
 function start() {
   let myArr = getData();
-  let prCount = myArr.length - 1;
+  /*let myArr = [
+    [20, 40, 60, 80, 100],
+    [10, 31, 42, 62, 76],
+    [12, 24, 36, 52, 74],
+    [11, 36, 45, 60, 77],
+    [16, 37, 46, 63, 80],
+  ];
+*/ let prCount = myArr.length - 1;
   let varCount = myArr[0].length;
 
   console.log("prCount = " + prCount + "\nvarCount = " + varCount);
@@ -127,6 +134,8 @@ function start() {
   for (let i = 0; i < prCount; i++) {
     answArr.push("!");
   }
+  console.log("answArr:");
+  console.log(answArr);
 
   //Считаем массив результатов
   //Копируем в copyArr allArr чтобы можно было посмотреть allArr в консоли
@@ -315,9 +324,19 @@ function answer(copyArr, answArr, myArr) {
   // и в каком он K - первая размерность (maxInd)
   let max = 0;
   let maxInd = 0;
+  let prCount = myArr.length - 1;
+
+  let sum = 0;
+
   for (let i = 0; i < copyArr.length; i++) {
-    for (let j = copyArr[0].length - 1; j >= 0; j--) {
-      if (copyArr[i][j][copyArr[i][j].length - 1] >= max) {
+    for (let j = prCount - 1; j >= 0; j--) {
+      if (
+        copyArr[i][j][copyArr[i][j].length - 1] >= max &&
+        typeof answArr[prCount - i - 2] === "string"
+      ) {
+        console.log(
+          "answArr[" + (prCount - i - 2) + "] = " + answArr[prCount - i - 2]
+        );
         max = copyArr[i][j][copyArr[i][j].length - 1];
         maxInd = i;
       }
@@ -330,7 +349,7 @@ function answer(copyArr, answArr, myArr) {
   writeToAnswArr(cutArr, maxInd, myArr, answArr);
 
   //Убираем из copyArr проанализированное K
-  copyArr.splice(maxInd, 1);
+  //copyArr.splice(maxInd, 1);
   for (let i = 0; i < copyArr.length; i++) {
     copyArr[i].pop();
   }
@@ -338,8 +357,16 @@ function answer(copyArr, answArr, myArr) {
   console.log("Урезанный copyArr");
 
   console.log(copyArr);
-  //Рекурсия пока у нас есть элементы в copyArr
-  if (copyArr.length > 0) {
+
+  //Считаем сумму элементов в answArr
+  for (let i = 0; i < answArr.length; i++) {
+    if (!(typeof answArr[i] === "string")) {
+      sum += 1;
+    }
+  }
+
+  //Рекурсия пока у нас не заполнен answArr
+  if (sum + 1 < answArr.length) {
     answer(copyArr, answArr, myArr);
   } else {
     let sum = 0;
