@@ -87,13 +87,6 @@ function getData() {
   return dataArr;
 }
 
-//let allArr = [];
-//let resArr = [];
-//let myArr = [];
-//let prCount = 0;
-//let varCount = 0;
-//let answArr = [];
-
 function start() {
   let myArr = getData();
   /*let myArr = [
@@ -103,7 +96,8 @@ function start() {
     [11, 36, 45, 60, 77],
     [16, 37, 46, 63, 80],
   ];
-*/ let prCount = myArr.length - 1;
+  */
+  let prCount = myArr.length - 1;
   let varCount = myArr[0].length;
 
   console.log("prCount = " + prCount + "\nvarCount = " + varCount);
@@ -129,21 +123,38 @@ function start() {
   //создаём и выводим таблицу расчёта
   createCalculateTable(resArr, allArr, prCount, varCount);
 
+  //собираем отдельные максимумы в массив
+  let maxArr = getMaxArr(allArr);
+  console.log("maxArr:");
+  console.log(maxArr);
+
+  //находим все варианты индексов
+  let maxIndices = findMaxIndices(transposeMatrix(maxArr));
+  console.log("maxIndices:");
+  console.log(maxIndices);
+
   //создаём массив для ответа и заполняем его "!"
   let answArr = [];
-  for (let i = 0; i < prCount; i++) {
-    answArr.push("!");
+  for (let i = 0; i < maxIndices.length; i++) {
+    let tempArr = [];
+    for (let j = 0; j < prCount; j++) {
+      tempArr.push("!");
+    }
+    answArr.push(tempArr);
   }
   console.log("answArr:");
   console.log(answArr);
 
-  //Считаем массив результатов
-  //Копируем в copyArr allArr чтобы можно было посмотреть allArr в консоли
-  let copyArr = JSON.parse(JSON.stringify(allArr));
-  answer(copyArr, answArr, myArr);
+  answArr = solve(allArr, maxIndices, answArr, myArr);
 
+  console.log("answArr:");
+  console.log(answArr);
+
+  uniqArr = Array.from(new Set(answArr.map(JSON.stringify))).map(JSON.parse);
+  console.log("uniqArr:");
+  console.log(uniqArr);
   //Выводим результат
-  printAnswer(answArr);
+  printAnswer(uniqArr);
 }
 
 function getResArr(myArr) {
@@ -317,105 +328,6 @@ function createCalculateTable(resArr, allArr, prCount, varCount) {
   divResult.appendChild(kTable);
 }
 
-function answer(copyArr, answArr, myArr) {
-  console.log("copyArr:");
-  console.log(copyArr);
-  //Ищем максимальный элемент с конца (max)
-  // и в каком он K - первая размерность (maxInd)
-  let max = 0;
-  let maxInd = 0;
-  let prCount = myArr.length - 1;
-
-  let sum = 0;
-
-  for (let i = 0; i < copyArr.length; i++) {
-    for (let j = prCount - 1; j >= 0; j--) {
-      if (
-        copyArr[i][j][copyArr[i][j].length - 1] >= max &&
-        typeof answArr[prCount - i - 2] === "string"
-      ) {
-        console.log(
-          "answArr[" + (prCount - i - 2) + "] = " + answArr[prCount - i - 2]
-        );
-        max = copyArr[i][j][copyArr[i][j].length - 1];
-        maxInd = i;
-      }
-    }
-  }
-  console.log("max = " + max + "\nmaxInd = " + maxInd);
-
-  //Вписываем в нужное место answArr
-  let cutArr = copyArr[maxInd][copyArr[maxInd].length - 1];
-  writeToAnswArr(cutArr, maxInd, myArr, answArr);
-
-  //Убираем из copyArr проанализированное K
-  //copyArr.splice(maxInd, 1);
-  for (let i = 0; i < copyArr.length; i++) {
-    copyArr[i].pop();
-  }
-
-  console.log("Урезанный copyArr");
-
-  console.log(copyArr);
-
-  //Считаем сумму элементов в answArr
-  for (let i = 0; i < answArr.length; i++) {
-    if (!(typeof answArr[i] === "string")) {
-      sum += 1;
-    }
-  }
-
-  //Рекурсия пока у нас не заполнен answArr
-  if (sum + 1 < answArr.length) {
-    answer(copyArr, answArr, myArr);
-  } else {
-    let sum = 0;
-    console.log("\nВыход из рекурсии");
-    console.log("answArr");
-    console.log(answArr);
-
-    //Считаем сумму элементов в answArr
-    for (let i = 0; i < answArr.length; i++) {
-      if (!(typeof answArr[i] === "string")) {
-        sum += answArr[i];
-      }
-    }
-
-    //Изменяем последний оставшийся элемент "!" на (Общее количество средств - сумма элементов в answArr)
-    for (let i = 0; i < answArr.length; i++) {
-      if (typeof answArr[i] === "string") {
-        answArr[i] = myArr[0][myArr[0].length - 1] - sum;
-      }
-    }
-    console.log("Итоговый answArr");
-    console.log(answArr);
-  }
-}
-
-function writeToAnswArr(cutArr, maxInd, myArr, answArr) {
-  console.log("\ncutArr");
-
-  console.log(cutArr);
-  //Ищем в каком элементе(строке) находится максимальное число
-  let stroka = 0;
-  for (let i = 0; i < cutArr.length - 1; i++) {
-    //console.log(cutArr[i][cutArr[i].length - 1]);
-
-    if (cutArr[i][cutArr[i].length - 1] !== 0) {
-      stroka = i;
-      break;
-    }
-  }
-  console.log("stroka = " + stroka);
-
-  let prCount = myArr.length - 1;
-
-  console.log(
-    "Вкладываем в " + (prCount - maxInd - 1) + " проект " + myArr[0][stroka]
-  );
-  answArr[prCount - maxInd - 2] = myArr[0][stroka];
-}
-
 function printAnswer(answArr) {
   let divAnsw = document.getElementById("answer");
   divAnsw.innerHTML = "";
@@ -428,7 +340,7 @@ function printAnswer(answArr) {
   let thead = document.createElement("thead");
 
   let hTr = document.createElement("tr");
-  for (let i = 0; i < answArr.length; i++) {
+  for (let i = 0; i < answArr[0].length; i++) {
     let th = document.createElement("th");
     th.textContent = "X" + (i + 1);
     hTr.appendChild(th);
@@ -438,14 +350,140 @@ function printAnswer(answArr) {
 
   let tbody = document.createElement("tbody");
 
-  let tr = document.createElement("tr");
-  for (let i = 0; i < answArr.length; i++) {
-    let td = document.createElement("td");
-    td.textContent = answArr[i].toFixed(2);
-    tr.appendChild(td);
-  }
+  for (each of answArr) {
+    let tr = document.createElement("tr");
+    for (let i = 0; i < each.length; i++) {
+      let td = document.createElement("td");
+      td.textContent = each[i].toFixed(2);
+      tr.appendChild(td);
+    }
 
-  tbody.appendChild(tr);
+    tbody.appendChild(tr);
+  }
   answTable.appendChild(tbody);
   divAnsw.appendChild(answTable);
+}
+
+function getMaxArr(allArr) {
+  let maxArr = [];
+  for (elem of allArr) {
+    let tempArr = [];
+    for (subelement of elem) {
+      tempArr.push(subelement[subelement.length - 1]);
+    }
+    maxArr.push(tempArr.slice(-allArr.length));
+  }
+  return maxArr;
+}
+
+function transposeMatrix(matrix) {
+  return matrix[0].map((_, colIndex) => matrix.map((row) => row[colIndex]));
+}
+
+function findMaxIndices(matrix) {
+  // Сюда результаты, массив, так как мож быть несколкьо
+  let paths = [
+    {
+      // сюда прям резульат
+      indices: [],
+      // сюда индексы которые в текущем забеге уже отработали
+      usedIndices: new Set(),
+    },
+  ];
+
+  // просмотр матрицы снизу вверх
+  for (let rowIndex = matrix.length - 1; rowIndex >= 0; rowIndex--) {
+    const row = matrix[rowIndex];
+    let newPaths = [];
+
+    // Для каждого уже существующего варианта результатов
+    for (const path of paths) {
+      // убираем индексы которые уже есть в результате
+      const used = path.usedIndices;
+      const availableIndices = row
+        .map((_, idx) => idx)
+        .filter((idx) => !used.has(idx));
+
+      // Ищем максимум в оставшихся значениях строки.
+      // Не лучший варик, но более понятный для прочтения
+      // Лучш потом заменить на флажок первого значения
+      let maxVal = Number.NEGATIVE_INFINITY;
+      for (const idx of availableIndices) {
+        if (row[idx] > maxVal) {
+          maxVal = row[idx];
+        }
+      }
+
+      // Когда макс найден, ищем есть ли ещё такие же
+      const maxIndices = availableIndices.filter((idx) => row[idx] === maxVal);
+
+      // Для каждого "индекса" создаём варик
+      for (const idx of maxIndices) {
+        // Обновляешь список использованых индексов
+        const newUsedIndices = new Set(used);
+        newUsedIndices.add(idx);
+
+        // Текущий результат
+        const newIndices = [...path.indices, idx];
+        // Запихиваешь в результаты каждый варик
+        newPaths.push({
+          indices: newIndices,
+          usedIndices: newUsedIndices,
+        });
+      }
+    }
+
+    // все существующие результаты обновляешь для следующей итерации
+    paths = newPaths;
+  }
+
+  return paths.map((path) => path.indices);
+}
+
+function solve(allArr, maxIndices, answArr, myArr) {
+  for (let elem = 0; elem < maxIndices.length; elem++) {
+    let t = 0;
+    for (let i = allArr[0].length - 1; i > allArr.length - 1; i--) {
+      //console.log(i);
+      let temp = allArr[maxIndices[elem][t]][i];
+      //console.log(temp);
+
+      //ищем в какой строке находится макс
+      let stroka = 0;
+      for (let i = 0; i < temp.length - 1; i++) {
+        //console.log(cutArr[i][cutArr[i].length - 1]);
+
+        if (temp[i][temp[i].length - 1] !== 0) {
+          stroka = i;
+          break;
+        }
+      }
+      //console.log("stroka = " + stroka);
+
+      let prCount = myArr.length - 1;
+      answArr[elem][prCount - maxIndices[elem][t] - 2] = myArr[0][stroka];
+
+      t++;
+    }
+  }
+
+  for (each of answArr) {
+    let sum = 0;
+    //Считаем сумму элементов в answArr
+    for (let i = 0; i < each.length; i++) {
+      if (!(typeof each[i] === "string")) {
+        sum += each[i];
+      }
+    }
+
+    //Изменяем последний оставшийся элемент "!" на (Общее количество средств - сумма элементов в answArr)
+    for (let i = 0; i < each.length; i++) {
+      if (typeof each[i] === "string") {
+        each[i] = myArr[0][myArr[0].length - 1] - sum;
+      }
+    }
+  }
+
+  return answArr;
+  //console.log(allArr[0].length - 1);
 }
