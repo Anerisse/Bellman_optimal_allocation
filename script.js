@@ -1,5 +1,132 @@
 let dataTable = document.getElementById("dataTable");
 
+window.addEventListener("DOMContentLoaded", () => {
+  dbDataDisplay();
+});
+
+function dbDataDisplay() {
+  let dbDiv = document.getElementById("dbDiv");
+  dbDiv.innerHTML = "";
+  const p = document.createElement("p");
+  p.textContent = "Автосохранение: ";
+  p.classList.add("mb-3", "mt-2");
+  dbDiv.appendChild(p);
+  window.database
+    .getAllData()
+    .then((data) => {
+      console.log("Данные из базы данных:", data);
+
+      data.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = ` ${item.name}`;
+
+        li.classList.add(
+          "list-group-item",
+          "cursor-pointer",
+          "list-group-item-action",
+          "border",
+          "border-dark",
+          "p-1",
+          "ps-2",
+          "mt-1",
+          "rounded"
+        );
+
+        const input = document.createElement("input");
+        input.setAttribute("type", "hidden");
+        input.setAttribute("name", `${item.id}`);
+        input.setAttribute("value", `${JSON.stringify(item.inputData)}`);
+
+        // Открываем модальное окно при клике
+        li.addEventListener("click", function () {
+          document.getElementById(
+            "previewText"
+          ).textContent = `Название: ${item.name}`;
+
+          document.getElementById("previewData").textContent = JSON.stringify(
+            item.inputData
+          );
+
+          // Открываем модальное окно
+          let previewModal = new bootstrap.Modal(
+            document.getElementById("previewModal")
+          );
+          previewModal.show();
+        });
+
+        dbDiv.appendChild(li);
+        dbDiv.appendChild(input);
+      });
+    })
+    .catch((error) => {
+      console.error("Ошибка при получении данных:", error);
+    });
+}
+
+document.getElementById("applyDataBtn").addEventListener("click", function () {
+  const inputDataString = document.getElementById("previewData").textContent;
+  const inputDataArray = JSON.parse(inputDataString);
+  dataToDataTable(inputDataArray);
+  const modalElement = document.getElementById("previewModal");
+  const modalInstance = bootstrap.Modal.getInstance(modalElement); // Получаем экземпляр
+
+  if (modalInstance) {
+    modalInstance.hide(); // Закрываем окно
+  }
+});
+function dataToDataTable(data) {
+  let prCount = data.length - 1;
+  let varCount = data[0].length;
+  let dataArr = data;
+  dataTable.innerHTML = "";
+
+  let thead = document.createElement("thead");
+  let tr = document.createElement("tr");
+
+  let thS = document.createElement("th");
+  thS.textContent = "Средства";
+  tr.appendChild(thS);
+
+  let thN = document.createElement("th");
+  thN.colSpan = prCount;
+  thN.textContent = "Рейтинг систем";
+  tr.appendChild(thN);
+
+  thead.appendChild(tr);
+  dataTable.appendChild(thead);
+
+  let tbody = document.createElement("tbody");
+  for (let i = 0; i < varCount + 1; i++) {
+    let tempTr = document.createElement("tr");
+    for (let j = 0; j < prCount + 1; j++) {
+      let tempTd = document.createElement("td");
+
+      if (i === 0) {
+        if (j === 0) {
+          tempTd.textContent = "x";
+        } else {
+          tempTd.textContent = "f" + j + "(x)";
+        }
+      } else {
+        let tempInput = document.createElement("input");
+        tempInput.type = "number";
+        tempInput.step = "0.01";
+        if (dataArr.length <= j || dataArr[j].length < i) {
+          tempInput.value = 0.0;
+        } else {
+          tempInput.value = dataArr[j][i - 1];
+        }
+        tempTd.appendChild(tempInput);
+      }
+
+      tempTr.appendChild(tempTd);
+    }
+    tbody.appendChild(tempTr);
+  }
+
+  dataTable.appendChild(tbody);
+}
+
 function changeSize() {
   let projectCountFromInput = Number(
     document.getElementById("projectCountInput").value
@@ -99,6 +226,20 @@ function start() {
   */
   let prCount = myArr.length - 1;
   let varCount = myArr[0].length;
+
+  //автосохранение в бд
+
+  async function saveAndUpdate() {
+    try {
+      await window.database.addData("_", myArr, true); // Дожидаемся завершения
+      dbDataDisplay(); // Только после успешного завершения обновляем данные
+    } catch (error) {
+      console.error("Ошибка при сохранении данных:", error);
+    }
+  }
+
+  // Вызываем функцию
+  saveAndUpdate();
 
   console.log("prCount = " + prCount + "\nvarCount = " + varCount);
 
