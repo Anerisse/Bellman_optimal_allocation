@@ -112,9 +112,30 @@ function dbDataDisplay() {
 }
 
 document.getElementById("applyDataBtn").addEventListener("click", function () {
-  const inputDataString = document.getElementById("previewData").textContent;
-  const inputDataArray = JSON.parse(inputDataString);
-  dataToDataTable(inputDataArray);
+  const previewTable = document.getElementById("previewTable");
+  let rowCount = previewTable.rows.length;
+  //console.log("rowCount = " + rowCount);
+  let columnCount = previewTable.rows[2].cells.length;
+
+  //console.log("columnCount = " + columnCount);
+  let dataArr = [];
+
+  for (let i = 0; i < columnCount; i++) {
+    dataArr.push([]);
+    for (let j = 2; j < rowCount; j++) {
+      let cell = previewTable.rows[j].cells[i];
+      let inputValue = Number(cell.textContent);
+      dataArr[i].push(inputValue);
+    }
+  }
+
+  //console.log("Введённые данные: ");
+
+  //console.log(dataArr);
+
+  // const inputDataString = document.getElementById("previewData").textContent;
+
+  dataToDataTable(dataArr);
   const modalElement = document.getElementById("previewModal");
   const modalInstance =
     bootstrap.Modal.getInstance(modalElement) ||
@@ -124,6 +145,7 @@ document.getElementById("applyDataBtn").addEventListener("click", function () {
     modalInstance.hide(); // Закрываем окно
   }
 });
+
 function dataToDataTable(data) {
   let prCount = data.length - 1;
   let varCount = data[0].length;
@@ -212,15 +234,12 @@ function dataToPreviewTable(data) {
           tempTd.textContent = "f" + j + "(x)";
         }
       } else {
-        let temp = document.createElement("td");
-
         if (dataArr.length <= j || dataArr[j].length < i) {
-          temp.textContent = 0.0;
+          tempTd.textContent = 0.0;
         } else {
-          temp.textContent = dataArr[j][i - 1];
+          tempTd.textContent = dataArr[j][i - 1];
         }
-        temp.style.border = "none";
-        tempTd.appendChild(temp);
+        //tempTd.style.border = "none";
       }
 
       tempTr.appendChild(tempTd);
@@ -722,4 +741,9 @@ function solve(allArr, maxIndices, answArr, myArr) {
 
   return answArr;
   //console.log(allArr[0].length - 1);
+}
+
+function turnOver() {
+  let data = getData();
+  dataToDataTable(transposeMatrix(data));
 }

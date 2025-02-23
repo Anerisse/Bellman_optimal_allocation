@@ -64,36 +64,31 @@
         <!-- Таблица ввода -->
         <div class="col-8">
           <!-- Верхняя часть с количеством проектов/вариантов -->
-          <div class="Counts">
-            <label for="projectCountInput">Количество проектов:</label>
-            <input
-              type="number"
-              style="width: 50px"
-              id="projectCountInput"
-              value="4"
-              min="1"
-            />
-            <label for="varCount">Количество вариантов:</label>
+          <div class="Counts d-flex justify-content-between align-items-center">
+            <!-- Левая часть -->
+            <div>
+              <label for="projectCountInput">Количество проектов:</label>
+              <input type="number" style="width: 50px" id="projectCountInput" value="4" min="1" />
+              
+              <label for="varCountInput">Количество вариантов:</label>
+              <input type="number" id="varCountInput" value="5" min="1" style="width: 50px" />
+              
+              <button type="button" onclick="changeSize()" class="btn btn-outline-dark" id="projectCountButton">
+                Применить
+              </button>
+            </div>
 
-            <input
-              type="number"
-              id="varCountInput"
-              value="5"
-              min="1"
-              style="width: 50px"
-            />
-            <button
-              type="button"
-              onclick="changeSize()"
-              class="btn btn-outline-dark"
-              id="projectCountButton"
-            >
-              Применить
-            </button>
-            <button id="openSaveModalBtn" class="btn btn-primary">
-              <i class="fa-regular fa-floppy-disk"></i> Сохранить
-            </button>
+            <!-- Правая часть с кнопками "Перевернуть" и "Сохранить" -->
+            <div>
+              <button class="btn btn-outline-dark" onclick="turnOver()">
+                <i class="fa-solid fa-rotate"></i> Перевернуть
+              </button>
+              <button id="openSaveModalBtn" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk"></i> Сохранить
+              </button>
+            </div>
           </div>
+
           <!-- Таблица -->
           <div class="table-responsive mb-2">
             <table
@@ -237,6 +232,7 @@
             
           </div>
           <div class="modal-footer">
+            <button type="button" class="btn btn-danger position-absolute start-0 bottom-0 m-3" id="deleteDataBtn"><i class="fa-regular fa-trash-can"></i> Удалить</button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
             <button type="button" class="btn btn-primary" id="applyDataBtn">Применить</button>
           </div>
