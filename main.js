@@ -1,23 +1,29 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("node:path");
-const { addData, getAllData } = require("./database");
+const database = require("./database");
 
 // Обработчик для добавления данных
 ipcMain.handle("add-data", async (event, name, inputData, isAutoSave) => {
-  addData(name, inputData, isAutoSave);
+  try {
+    await database.addData(name, inputData, isAutoSave);
+  } catch (error) {
+    console.error("Error with add-data:", error);
+  }
 });
 
 // Обработчик для получения всех данных
 ipcMain.handle("get-all-data", async () => {
-  return new Promise((resolve, reject) => {
-    getAllData((err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(data);
-      }
-    });
-  });
+  if (!database || typeof database.getAllData !== "function") {
+    return []; // Возвращаем пустой массив вместо ошибки
+  }
+
+  try {
+    const data = await database.getAllData();
+    return data;
+  } catch (error) {
+    console.error("Error with get-all-data:", error);
+    return [];
+  }
 });
 
 const createWindow = () => {

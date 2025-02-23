@@ -2,19 +2,65 @@ let dataTable = document.getElementById("dataTable");
 
 window.addEventListener("DOMContentLoaded", () => {
   dbDataDisplay();
+  document
+    .getElementById("openSaveModalBtn")
+    .addEventListener("click", openSaveModal);
 });
 
+function openSaveModal() {
+  // Открываем модальное окно
+  let saveModal = new bootstrap.Modal(document.getElementById("saveModal"));
+  saveModal.show();
+
+  document.getElementById("confirmSaveBtn").addEventListener(
+    "click",
+    function () {
+      let saveNameInput = document.getElementById("saveNameInput").value;
+      //console.log("Кнопка сохранить нажата. " + saveNameInput);
+
+      if (!saveNameInput) {
+        console.log("Поле названия пустое!");
+        return;
+      }
+
+      saveAndUpdate(saveNameInput, getData(), 0);
+      saveModal.hide();
+    },
+    { once: true }
+  );
+}
+
+async function saveAndUpdate(name, data, isAutoSave) {
+  console.log(`saveAndUpdate вызван с name=${name}, isAutoSave=${isAutoSave}`);
+  try {
+    await window.database.addData(name, data, isAutoSave);
+    // Дожидаемся завершения
+    dbDataDisplay(); // Только после успешного завершения обновляем данные
+  } catch (error) {
+    console.error("Ошибка при сохранении данных:", error);
+  }
+}
+
+//Вывод данных из БД
 function dbDataDisplay() {
   let dbDiv = document.getElementById("dbDiv");
   dbDiv.innerHTML = "";
-  const p = document.createElement("p");
-  p.textContent = "Автосохранение: ";
-  p.classList.add("mb-3", "mt-2");
-  dbDiv.appendChild(p);
+
   window.database
     .getAllData()
     .then((data) => {
       console.log("Данные из базы данных:", data);
+
+      if (!data || data.length === 0) {
+        //console.log("В базе данных нет записей!");
+        dbDiv.innerHTML = "<p>Нет сохранённых данных</p>";
+        return;
+      }
+
+      const p = document.createElement("p");
+      p.textContent = "Автосохранение: ";
+      p.classList.add("mb-3", "mt-2");
+      dbDiv.appendChild(p);
 
       data.forEach((item) => {
         const li = document.createElement("li");
@@ -37,20 +83,22 @@ function dbDataDisplay() {
         input.setAttribute("name", `${item.id}`);
         input.setAttribute("value", `${JSON.stringify(item.inputData)}`);
 
-        // Открываем модальное окно при клике
         li.addEventListener("click", function () {
           document.getElementById(
             "previewText"
           ).textContent = `Название: ${item.name}`;
 
-          document.getElementById("previewData").textContent = JSON.stringify(
-            item.inputData
-          );
+          let data = JSON.stringify(item.inputData);
+
+          document.getElementById(
+            "previewTime"
+          ).textContent = `Дата сохранения: ${item.createdAt}`;
 
           // Открываем модальное окно
           let previewModal = new bootstrap.Modal(
             document.getElementById("previewModal")
           );
+          dataToPreviewTable(item.inputData);
           previewModal.show();
         });
 
@@ -68,7 +116,9 @@ document.getElementById("applyDataBtn").addEventListener("click", function () {
   const inputDataArray = JSON.parse(inputDataString);
   dataToDataTable(inputDataArray);
   const modalElement = document.getElementById("previewModal");
-  const modalInstance = bootstrap.Modal.getInstance(modalElement); // Получаем экземпляр
+  const modalInstance =
+    bootstrap.Modal.getInstance(modalElement) ||
+    new bootstrap.Modal(modalElement); // Получаем экземпляр
 
   if (modalInstance) {
     modalInstance.hide(); // Закрываем окно
@@ -127,6 +177,60 @@ function dataToDataTable(data) {
   dataTable.appendChild(tbody);
 }
 
+function dataToPreviewTable(data) {
+  let previewTable = document.getElementById("previewTable");
+  let prCount = data.length - 1;
+  let varCount = data[0].length;
+  let dataArr = data;
+  previewTable.innerHTML = "";
+
+  let thead = document.createElement("thead");
+  let tr = document.createElement("tr");
+
+  let thS = document.createElement("th");
+  thS.textContent = "Средства";
+  tr.appendChild(thS);
+
+  let thN = document.createElement("th");
+  thN.colSpan = prCount;
+  thN.textContent = "Рейтинг систем";
+  tr.appendChild(thN);
+
+  thead.appendChild(tr);
+  previewTable.appendChild(thead);
+
+  let tbody = document.createElement("tbody");
+  for (let i = 0; i < varCount + 1; i++) {
+    let tempTr = document.createElement("tr");
+    for (let j = 0; j < prCount + 1; j++) {
+      let tempTd = document.createElement("td");
+
+      if (i === 0) {
+        if (j === 0) {
+          tempTd.textContent = "x";
+        } else {
+          tempTd.textContent = "f" + j + "(x)";
+        }
+      } else {
+        let temp = document.createElement("td");
+
+        if (dataArr.length <= j || dataArr[j].length < i) {
+          temp.textContent = 0.0;
+        } else {
+          temp.textContent = dataArr[j][i - 1];
+        }
+        temp.style.border = "none";
+        tempTd.appendChild(temp);
+      }
+
+      tempTr.appendChild(tempTd);
+    }
+    tbody.appendChild(tempTr);
+  }
+
+  previewTable.appendChild(tbody);
+}
+
 function changeSize() {
   let projectCountFromInput = Number(
     document.getElementById("projectCountInput").value
@@ -138,8 +242,8 @@ function changeSize() {
 
   let dataArr = getData();
 
-  console.log("projectCountFromInput = " + projectCountFromInput);
-  console.log("varCountFromInput = " + varCountFromInput);
+  //console.log("projectCountFromInput = " + projectCountFromInput);
+  //console.log("varCountFromInput = " + varCountFromInput);
 
   dataTable.innerHTML = "";
 
@@ -192,11 +296,11 @@ function changeSize() {
 
 function getData() {
   let rowCount = dataTable.rows.length;
-  console.log("rowCount = " + rowCount);
+  //console.log("rowCount = " + rowCount);
   let columnCount = dataTable.rows[2].cells.length;
 
-  console.log("columnCount = " + columnCount);
-  dataArr = [];
+  //console.log("columnCount = " + columnCount);
+  let dataArr = [];
 
   for (let i = 0; i < columnCount; i++) {
     dataArr.push([]);
@@ -207,14 +311,15 @@ function getData() {
     }
   }
 
-  console.log("Введённые данные: ");
+  //console.log("Введённые данные: ");
 
   console.log(dataArr);
 
   return dataArr;
 }
 
-function start() {
+async function start() {
+  console.log("start() вызван!");
   let myArr = getData();
   /*let myArr = [
     [20, 40, 60, 80, 100],
@@ -229,50 +334,40 @@ function start() {
 
   //автосохранение в бд
 
-  async function saveAndUpdate() {
-    try {
-      await window.database.addData("_", myArr, true); // Дожидаемся завершения
-      dbDataDisplay(); // Только после успешного завершения обновляем данные
-    } catch (error) {
-      console.error("Ошибка при сохранении данных:", error);
-    }
-  }
+  await saveAndUpdate("_", myArr, true);
 
-  // Вызываем функцию
-  saveAndUpdate();
-
-  console.log("prCount = " + prCount + "\nvarCount = " + varCount);
+  //console.log("prCount = " + prCount + "\nvarCount = " + varCount);
 
   //Добавляем нули первыми элементами
   for (let i = 0; i < myArr.length; i++) {
     myArr[i].unshift(0);
   }
-  console.log("myArr");
-  console.log(myArr);
+  //console.log("myArr");
+  //console.log(myArr);
 
   //Получаем массив ресурсов(самый левый столбец)
-  console.log("resArr:");
+  //console.log("resArr:");
   let resArr = getResArr(myArr);
-  console.log(resArr);
+  //console.log(resArr);
 
   //Получаем общий массив
   let allArr = getAllArr(myArr);
 
-  console.log("allArr");
-  console.log(allArr);
+  //console.log("allArr");
+  //console.log(allArr);
 
   //создаём и выводим таблицу расчёта
   createCalculateTable(resArr, allArr, prCount, varCount);
 
   //собираем отдельные максимумы в массив
   let maxArr = getMaxArr(allArr);
-  console.log("maxArr:");
-  console.log(maxArr);
+  //console.log("maxArr:");
+  //console.log(maxArr);
 
   //находим все варианты индексов
   let maxIndices = findMaxIndices(transposeMatrix(maxArr));
-  console.log("maxIndices:");
-  console.log(maxIndices);
+  //console.log("maxIndices:");
+  //console.log(maxIndices);
 
   //создаём массив для ответа и заполняем его "!"
   let answArr = [];
@@ -283,17 +378,17 @@ function start() {
     }
     answArr.push(tempArr);
   }
-  console.log("answArr:");
-  console.log(answArr);
+  //console.log("answArr:");
+  //console.log(answArr);
 
   answArr = solve(allArr, maxIndices, answArr, myArr);
 
-  console.log("answArr:");
-  console.log(answArr);
+  //console.log("answArr:");
+  //console.log(answArr);
 
   uniqArr = Array.from(new Set(answArr.map(JSON.stringify))).map(JSON.parse);
-  console.log("uniqArr:");
-  console.log(uniqArr);
+  //console.log("uniqArr:");
+  //console.log(uniqArr);
   //Выводим результат
   printAnswer(uniqArr);
 }
@@ -318,12 +413,12 @@ function getAllArr(myArr) {
   let varCount = myArr[0].length;
   let allArr = [];
   for (let K = prCount - 1; K > 0; K--) {
-    console.log("");
-    console.log("%cK = " + K, "color:red");
+    //console.log("");
+    //console.log("%cK = " + K, "color:red");
     let partArr = [];
     ///[... [ [0, 2, 3], [1, 1, 1] ], ...]
     /// []
-    console.log("partArr(включает в себя все tmpArr):");
+    //console.log("partArr(включает в себя все tmpArr):");
 
     for (let i = 0; i < varCount; i++) {
       // [ [] ]
@@ -377,9 +472,9 @@ function fillElemAllArr(myArr, allArr, i, stolb) {
     }
   }
 
-  console.log("tmpArr " + i);
+  //console.log("tmpArr " + i);
 
-  console.log(tmpArr);
+  //console.log(tmpArr);
 
   return tmpArr;
 }

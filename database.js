@@ -12,9 +12,9 @@ const isFirstRun = !fs.existsSync(dbPath);
 // Создаем или подключаем базу данных
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error("Ошибка при подключении к базе данных:", err.message);
+    console.error("DB connection error:", err.message);
   } else {
-    console.log("Подключение к базе данных успешно установлено.");
+    console.log("BD connection success.");
     if (isFirstRun) {
       initializeDatabase();
     }
@@ -35,9 +35,9 @@ function initializeDatabase() {
   `,
     (err) => {
       if (err) {
-        console.error("Ошибка при создании таблицы:", err.message);
+        console.error("Error create table:", err.message);
       } else {
-        console.log("Таблица users создана успешно.");
+        console.log("Table users created successfully.");
       }
     }
   );
@@ -57,7 +57,7 @@ function addData(name, inputData, isAutoSave) {
 
     // Сначала удаляем существующую запись с таким же inputDataJson
     db.run(
-      "DELETE FROM data WHERE inputData = ?",
+      "DELETE FROM data WHERE isAutoSave = 1 AND inputData = ?",
       [inputDataJson],
       function (err) {
         if (err) {
@@ -85,20 +85,25 @@ function addData(name, inputData, isAutoSave) {
   });
 }
 
-function getAllData(callback) {
-  db.all("SELECT * FROM data ORDER BY id DESC", [], (err, rows) => {
-    if (err) {
-      console.error("Ошибка при получении данных:", err.message);
-      callback(err, null);
-    } else {
-      // Преобразуем JSON-строку обратно в матрицу
-      const data = rows.map((row) => ({
-        ...row,
-        inputData: JSON.parse(row.inputData),
-        isAutoSave: row.isAutoSave === 1, // Преобразуем число в boolean
-      }));
-      callback(null, data);
-    }
+function getAllData() {
+  return new Promise((resolve, reject) => {
+    db.all("SELECT * FROM data ORDER BY id DESC", [], (err, rows) => {
+      if (err) {
+        console.error("Error with getAllData:", err.message);
+        reject(err);
+      } else {
+        //console.log("Data load success:", rows);
+        // Преобразуем JSON-строку обратно в матрицу
+        const data = rows.map((row) => ({
+          ...row,
+          inputData: JSON.parse(row.inputData),
+          isAutoSave: row.isAutoSave === 1, // Преобразуем число в boolean
+        }));
+        console.log("DB request completed, sending response");
+
+        resolve(data);
+      }
+    });
   });
 }
 
